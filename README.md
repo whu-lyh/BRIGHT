@@ -31,6 +31,8 @@
   <img src="figure/overall.jpg" alt="accuracy" width="97%">
 </p>
 
++ Inface a change detection task...
++ The change detection task is formulated as a classification(segmentation) task or building detection task and damage classification task.
 
 ## 🗝️Let's Get Started with DFC 2025!
 ### `A. Installation`
@@ -130,7 +132,7 @@ Then, you can go to the official [Leaderboard](https://codalab.lisn.upsaclay.fr/
 * `All png files should be submitted in zip file format. Zip all prediction files directly without any folders containing them.`
 * `Using the raw prediction results instead of visualized ones.`
 
-
++ Directly upload the zipped png files listed unbder the raw folder, not the color folder.
 
 ## 🤔Common Issues
 Based on peers' questions from [issue section](https://github.com/ChenHongruixuan/BRIGHT/issues), here's a quick navigate list of solutions to some common issues.

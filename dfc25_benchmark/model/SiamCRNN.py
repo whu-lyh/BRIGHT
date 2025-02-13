@@ -48,7 +48,6 @@ class SiamCRNN(nn.Module):
         super(SiamCRNN, self).__init__()
         expansion = 1
 
-       
         self.encoder_1 = torchvision.models.resnet18(pretrained=True)
         self.encoder_2 = torchvision.models.resnet18(pretrained=True)
         return_nodes = {
@@ -85,7 +84,6 @@ class SiamCRNN(nn.Module):
         self.smooth_layer_23 = ResBlock(in_channels=128, out_channels=128, stride=1) 
         self.smooth_layer_22 = ResBlock(in_channels=128, out_channels=128, stride=1) 
         self.smooth_layer_21 = ResBlock(in_channels=128, out_channels=128, stride=1) 
-        
 
         self.main_clf_loc = nn.Conv2d(in_channels=128, out_channels=2, kernel_size=1)
         self.main_clf_clf = nn.Conv2d(in_channels=128, out_channels=4, kernel_size=1)

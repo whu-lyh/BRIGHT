@@ -25,7 +25,15 @@ class ConvBlock(nn.Module):
 
 
 class UNet(nn.Module):
+    """Basic UNet architecture
+    """
     def __init__(self, in_channels, out_channels):
+        """_summary_
+
+        Args:
+            in_channels (int): the number of channel of input images
+            out_channels (int): the number of class of each pixel
+        """
         super(UNet, self).__init__()
         
         self.encoder1 = ConvBlock(in_channels, 64)
@@ -39,7 +47,7 @@ class UNet(nn.Module):
         self.decoder2 = ConvBlock(128 * 2, 128)
         self.decoder1 = ConvBlock(64 * 2, 64)
         
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2) # spatial resolution will be down sampled
         self.upconv4 = nn.ConvTranspose2d(1024, 512, kernel_size=2, stride=2)
         self.upconv3 = nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2)
         self.upconv2 = nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2)
@@ -57,7 +65,7 @@ class UNet(nn.Module):
         
         # Decoder path
         dec4 = self.upconv4(enc5)
-        dec4 = torch.cat((dec4, enc4), dim=1)
+        dec4 = torch.cat((dec4, enc4), dim=1) # skip connection
         dec4 = self.decoder4(dec4)
         
         dec3 = self.upconv3(dec4)
@@ -71,7 +79,7 @@ class UNet(nn.Module):
         dec1 = self.upconv1(dec2)
         dec1 = torch.cat((dec1, enc1), dim=1)
         dec1 = self.decoder1(dec1)
-        
+        #  B C H W
         out = self.final_conv(dec1)
         
         return out

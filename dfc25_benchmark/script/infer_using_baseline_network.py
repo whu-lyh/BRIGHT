@@ -1,20 +1,23 @@
-import sys
-sys.path.append('/home/chenhrx/project/BRIGHT/dfc25_benchmark') # change this to the path of your project
-
-import os
-import torch
-import numpy as np
-from tqdm import tqdm
-from collections import defaultdict
-from torch.utils.data import DataLoader
-from dataset.make_data_loader import MultimodalDamageAssessmentDatset_Inference
-
-from PIL import Image
-from model.UNet import UNet
-from model.SiamCRNN import SiamCRNN
-
 import argparse
+import os
+import sys
+from collections import defaultdict
 from datetime import datetime
+
+import numpy as np
+import torch
+from PIL import Image
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+p = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
+if p not in sys.path:
+    sys.path.append(p)
+
+from dataset.make_data_loader import MultimodalDamageAssessmentDatset_Inference
+from model.SiamCRNN import SiamCRNN
+from model.UNet import UNet
+
 
 class Inference:
     def __init__(self, args):
@@ -22,7 +25,7 @@ class Inference:
 
         # Load dataset
         dataset = MultimodalDamageAssessmentDatset_Inference(args.val_dataset_path, args.val_data_name_list, suffix='.tif')
-        self.val_loader = DataLoader(dataset, batch_size=1, num_workers=1, drop_last=False)
+        self.val_loader = DataLoader(dataset, batch_size=1, num_workers=0, drop_last=False)
         
         # Load model
         self.model = UNet(in_channels=6, out_channels=4) 
