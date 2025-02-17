@@ -100,7 +100,7 @@ class Trainer(object):
             pre_change_imgs = pre_change_imgs.cuda()
             post_change_imgs = post_change_imgs.cuda()
             labels_loc = labels_loc.cuda().long()
-            labels_clf = labels_clf.cuda().long()
+            labels_clf = labels_clf.cuda().long() # shape: BHW=(self.args.train_batch_size, self.args.crop_size, self.args.crop_size)
 
             valid_labels_clf = (labels_clf != 255).any()
             if not valid_labels_clf:
@@ -108,8 +108,8 @@ class Trainer(object):
 
             if self.args.model_type == 'UNet':
                 # For UNet based architecture the concatenation is required
-                input_data = torch.cat([pre_change_imgs, post_change_imgs], dim=1)
-                output_clf = self.deep_model(input_data)
+                input_data = torch.cat([pre_change_imgs, post_change_imgs], dim=1) # B C*2 HW
+                output_clf = self.deep_model(input_data) # B num_class(4) HW
             elif self.args.model_type == 'SiamCRNN':
                 # For Siamse based architecture requires two inputs
                 # decoupling the task into two subtasks: building localization and damage classification.
@@ -119,6 +119,8 @@ class Trainer(object):
                 output_clf = self.deep_model(input_data)
                 # resize the feature to the raw image shape
                 output_clf = F.interpolate(output_clf, self.args.crop_size, None, 'bilinear', align_corners=True)
+            elif self.args.model_type == 'ChangeMamba':
+                outout_loc, output_clf = self.deep_model(pre_change_imgs, post_change_imgs)
             else:
                 raise NotImplementedError(f'Sorry, <{self.args.model_type}> function is not implemented!')
 
@@ -130,17 +132,17 @@ class Trainer(object):
 
             ce_loss_clf = F.cross_entropy(output_clf, labels_clf)
             # to avoid the inbanlance of label
-            lovasz_loss_clf = L.lovasz_softmax(F.softmax(output_clf, dim=1), labels_clf, ignore=255)      
-            if self.args.model_type == 'UNet':
+            # print("output_clf.shape: ", output_clf.shape)
+            predict = F.softmax(output_clf, dim=1) # shape: same as output_clf.shape
+            lovasz_loss_clf = L.lovasz_softmax(predict, labels_clf, ignore=255)      
+            if self.args.model_type == 'UNet' or 'MUHSI':
                 final_loss = ce_loss_clf + 0.75 * lovasz_loss_clf
             elif self.args.model_type == 'SiamCRNN':
                 final_loss = ce_loss_loc + ce_loss_clf + 0.75 * lovasz_loss_clf  + 0.5 * lovasz_loss_loc
-            elif self.args.model_type == 'MUHSI':
-                final_loss = ce_loss_clf + 0.75 * lovasz_loss_clf
             else:
                 raise NotImplementedError(f'Sorry, <{self.args.model_type}> function is not implemented!')
 
-            final_loss.backward(
+            final_loss.backward()
             self.optim.step()
             tqdm_object.set_postfix(train_loss=final_loss.item())
 

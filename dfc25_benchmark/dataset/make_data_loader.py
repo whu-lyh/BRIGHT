@@ -36,32 +36,28 @@ class MultimodalDamageAssessmentDatset(Dataset):
             pre_img, post_img, label = imutils.random_rot(pre_img, post_img, label)
 
         pre_img = imutils.normalize_img(pre_img)  # imagenet normalization
-        pre_img = np.transpose(pre_img, (2, 0, 1))
-
-        post_img = imutils.normalize_img(post_img)  # imagenet normalization
-        post_img = np.transpose(post_img, (2, 0, 1))
-
+        pre_img = np.transpose(pre_img, (2, 0, 1)) # CHW
+        post_img = imutils.normalize_img(post_img)  # imagenet normalization HWC=(self.crop_size, self.crop_size, 3)
+        post_img = np.transpose(post_img, (2, 0, 1)) # CHW
         return pre_img, post_img, label
 
     def __getitem__(self, index):
         pre_path = os.path.join(self.dataset_path, 'pre-event', self.data_list[index] + '_pre_disaster' + self.suffix)
         post_path = os.path.join(self.dataset_path, 'post-event', self.data_list[index] + '_post_disaster'  + self.suffix)
         label_path = os.path.join(self.dataset_path, 'target', self.data_list[index] + '_building_damage'  + self.suffix)
-        pre_img = self.loader(pre_path)[:,:,0:3] 
-        post_img = self.loader(post_path)  
-
-        # pre_img = np.stack((pre_img,)*3, axis=-1)
-        post_img = np.stack((post_img,)*3, axis=-1)
-        clf_label = self.loader(label_path)
-        # print("clf_label: ", clf_label.shape)
+        pre_img = self.loader(pre_path)[:, :, 0:3] # HWC
+        post_img = self.loader(post_path) # HW
+        post_img = np.stack((post_img, )*3, axis=-1)
+        clf_label = self.loader(label_path) # HW
 
         if 'train' in self.data_pro_type:
-            pre_img, post_img, clf_label = self.__transforms(True, pre_img, post_img, clf_label)
+            # crop the image randomly based on the given crop_size
+            pre_img, post_img, clf_label = self.__transforms(True, pre_img, post_img, clf_label) # CHW=(C, crop_size, crop_size)
         else:
-            pre_img, post_img, clf_label = self.__transforms(False, pre_img, post_img, clf_label)
+            pre_img, post_img, clf_label = self.__transforms(False, pre_img, post_img, clf_label) # CHW
             clf_label = np.asarray(clf_label)
         loc_label = clf_label.copy()
-        # print("clf_label after transform: ", clf_label.shape)
+
         loc_label[loc_label == 2] = 1
         loc_label[loc_label == 3] = 1
 
@@ -91,10 +87,9 @@ class MultimodalDamageAssessmentDatset_Inference(Dataset):
     def __getitem__(self, index):
         pre_path = os.path.join(self.dataset_path, 'pre-event', self.data_list[index] + '_pre_disaster' + self.suffix)
         post_path = os.path.join(self.dataset_path, 'post-event', self.data_list[index] + '_post_disaster'  + self.suffix)
-        pre_img = self.loader(pre_path)[:,:,0:3] 
+        pre_img = self.loader(pre_path)[:, :, 0:3] 
         post_img = self.loader(post_path)  
 
-        # pre_img = np.stack((pre_img,)*3, axis=-1)
         post_img = np.stack((post_img,)*3, axis=-1) 
 
         pre_img, post_img = self.__transforms(pre_img, post_img)

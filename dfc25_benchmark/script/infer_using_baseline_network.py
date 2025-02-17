@@ -6,6 +6,7 @@ from datetime import datetime
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from PIL import Image
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -15,6 +16,7 @@ if p not in sys.path:
     sys.path.append(p)
 
 from dataset.make_data_loader import MultimodalDamageAssessmentDatset_Inference
+from model.MambaHSI import MambaHSI
 from model.SiamCRNN import SiamCRNN
 from model.UNet import UNet
 
@@ -28,8 +30,14 @@ class Inference:
         self.val_loader = DataLoader(dataset, batch_size=1, num_workers=0, drop_last=False)
         
         # Load model
-        self.model = UNet(in_channels=6, out_channels=4) 
-        # self.model = SiamCRNN()
+        if self.args.model_type == 'UNet':
+            self.model = UNet(in_channels=6, out_channels=4) 
+        elif self.args.model_type == 'SiamCRNN':
+            self.model = SiamCRNN()
+        elif self.args.model_type == 'MUHSI':
+            self.model = MambaHSI(in_channels=6, num_classes=4, hidden_dim=128)
+        else:
+            raise NotImplementedError(f'Sorry, <{self.args.model_type}> function is not implemented!')
 
         self.model = self.model.cuda()
         self.model.eval()
@@ -69,13 +77,21 @@ class Inference:
                 post_change_imgs = post_change_imgs.cuda()
                 file_name = file_name[0]  # Get the filename as a string
                 
-                input_data = torch.cat([pre_change_imgs, post_change_imgs], dim=1) # if use UNet
-                output = self.model(input_data) # if use UNet
-                
-                # _, output = self.model(pre_change_imgs, post_change_imgs) # If use SiamCRNN
+                if self.args.model_type == 'UNet':
+                    input_data = torch.cat([pre_change_imgs, post_change_imgs], dim=1)
+                    output = self.model(input_data)
+                elif self.args.model_type == 'SiamCRNN':
+                     _, output = self.model(pre_change_imgs, post_change_imgs)
+                elif self.args.model_type == 'MUHSI':
+                    input_data = torch.cat([pre_change_imgs, post_change_imgs], dim=1)
+                    output = self.model(input_data)
+                    # resize the feature to the raw image shape
+                    raw_size = post_change_imgs.shape[2:]
+                    output = F.interpolate(output, raw_size, None, 'bilinear', align_corners=True)
+                else:
+                    raise NotImplementedError(f'Sorry, <{self.args.model_type}> function is not implemented!')
 
                 output = torch.argmax(output, dim=1).squeeze().cpu().numpy().astype(np.uint8)
-
                 self.save_prediction_map(output, file_name)
 
 
@@ -100,7 +116,7 @@ if __name__ == "__main__":
     parser.add_argument('--val_data_name_list', type=list)
     parser.add_argument('--existing_weight_path', type=str)
     parser.add_argument('--inferece_saved_path', type=str)
-
+    parser.add_argument('--model_type', type=str, choices=['UNet', 'SiamCRNN', 'MUHSI'], default='MUHSI')
     args = parser.parse_args()
     
     # Load test data list

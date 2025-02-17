@@ -24,7 +24,7 @@ python script/train_baseline_network.py  --dataset 'BRIGHT' \
                                 --eval_batch_size 1 \
                                 --num_workers 2 \
                                 --crop_size 640 \
-                                --max_iters 100000 \
+                                --max_iters 10000 \
                                 --learning_rate 1e-4 \
                                 --model_type 'MUHSI' \
                                 --train_dataset_path ${DATASET_PATH} \

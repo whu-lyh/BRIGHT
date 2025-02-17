@@ -141,7 +141,7 @@ class MambaHSI(nn.Module):
                                        nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
                                        BothMamba(channels=hidden_dim, token_num=token_num, use_residual=use_residual, group_num=group_num, use_att=use_att),
                                        nn.AvgPool2d(kernel_size=2, stride=2, padding=0),
-                                       BothMamba(channels=hidden_dim, token_num=token_num,use_residual=use_residual, group_num=group_num,use_att=use_att),
+                                       BothMamba(channels=hidden_dim, token_num=token_num, use_residual=use_residual, group_num=group_num,use_att=use_att),
                                        )
 
         self.cls_head = nn.Sequential(nn.Conv2d(in_channels=hidden_dim, out_channels=128, kernel_size=1, stride=1, padding=0),
@@ -150,9 +150,9 @@ class MambaHSI(nn.Module):
                                       nn.Conv2d(in_channels=128, out_channels=num_classes, kernel_size=1, stride=1, padding=0))
 
     def forward(self, x):
-        x = self.patch_embedding(x) # B 6 H W -> B C H W
-        x = self.mamba(x) # B C H W
-        logits = self.cls_head(x) # B num_classes H W
+        x = self.patch_embedding(x) # shape: BCHW -> B hidden_dim HW
+        x = self.mamba(x) # shape: B hidden_dim HW -> B hidden_dim H/4 W/4
+        logits = self.cls_head(x) # shape: B hidden_dim H/4 W/4 -> B class_count H/4 W/4
         return logits
 
 
