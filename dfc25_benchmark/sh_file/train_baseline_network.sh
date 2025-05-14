@@ -22,10 +22,11 @@ cd ..
 python script/train_baseline_network.py  --dataset 'BRIGHT' \
                                 --train_batch_size 1 \
                                 --eval_batch_size 1 \
+                                --val_internal 1000 \
                                 --num_workers 2 \
                                 --crop_size 640 \
-                                --max_iters 10000 \
-                                --learning_rate 1e-4 \
+                                --max_iters 100000 \
+                                --learning_rate 1e-5 \
                                 --model_type 'MUHSI' \
                                 --train_dataset_path ${DATASET_PATH} \
                                 --train_data_list_path ${PROJ_PATH}'/dfc25_benchmark/dataset/splitname/train_setlevel.txt' \

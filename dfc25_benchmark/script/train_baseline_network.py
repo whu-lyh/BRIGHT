@@ -146,7 +146,7 @@ class Trainer(object):
             self.optim.step()
             tqdm_object.set_postfix(train_loss=final_loss.item())
 
-            if (iteration + 1) % 500 == 0:
+            if (iteration + 1) % self.args.val_internal == 0:
                 self.deep_model.eval()
                 val_mIoU, final_OA, IoU_of_each_class = self.validation()
 
@@ -166,6 +166,7 @@ class Trainer(object):
     def validation(self):
         print('---------starting validation-----------')
         self.evaluator.reset()
+        # 1024 is the raw full resolution of input image
         dataset = MultimodalDamageAssessmentDatset(self.args.holdout_dataset_path, self.args.holdout_data_name_list, 1024, None, 'test')
         holdout_data_loader = DataLoader(dataset, batch_size=self.args.eval_batch_size, num_workers=0, drop_last=False)
         torch.cuda.empty_cache()
@@ -213,7 +214,7 @@ def main():
     parser.add_argument('--holdout_data_list_path', type=str)
     parser.add_argument('--train_batch_size', type=int, default=8)
     parser.add_argument('--eval_batch_size', type=int, default=1)
-
+    parser.add_argument('--val_internal', type=int, default=500)
     parser.add_argument('--crop_size', type=int)
 
     parser.add_argument('--train_data_name_list', type=list)
